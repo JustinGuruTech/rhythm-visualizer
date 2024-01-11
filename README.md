@@ -2,6 +2,8 @@
 
 This Python project is a rhythm visualizer that leverages the power of `pygame` to display complex rhythmic patterns. The visualizer creates an interactive experience that displays various beat patterns, especially accentuating odd time rhythms with visually distinguishable circles.
 
+See the [demo video](demo.mp4) for a preview of the visualizer in action.
+
 ## Installation
 
 To run this rhythm visualizer, you will need to have Python installed on your system as well as the `pygame` library.
@@ -47,3 +49,4 @@ custom_pattern_config = BeatPatternConfig(
     beats_per_measure=5,
     beat_strengths=[5, 2, 1, 5, 1, 5, 2, 1, 5, 1],
 )
+```
