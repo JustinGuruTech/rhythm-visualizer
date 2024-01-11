@@ -4,24 +4,23 @@ import math
 
 # Constants
 SCREEN_WIDTH, SCREEN_HEIGHT = 1600, 1200
-CIRCLE_RADIUS = 65
-SMALL_CIRCLE_RADIUS = 50
 CENTER_X, CENTER_Y = SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2
-FPS = 60  # Higher frame rate for smoother transitions
+FPS = 60  # Frame rate for smooth transitions
 BEAT_COLOR_ACTIVE = (96, 224, 130)
 BEAT_COLOR_INACTIVE = (200, 220, 200)
 BUTTON_TEXT_COLOR = (255, 255, 255)
 BUTTON_BG_COLOR = (0, 0, 0)
 FONT_SIZE_LARGE = 36
-FONT_SIZE_MEDIUM = 30
 CIRCLE_DISTANCE = 300
+CIRCLE_RADIUS = 65
+SMALL_CIRCLE_RADIUS = 50
 CIRCLE_BORDER_WIDTH = 2
 SMOOTH_TRANSITION_FACTOR = 10
-# New constant for mapping weights to size factors
+# Mapping beat strengths to size factors
 BEAT_STRENGTH_MAP = {
     1: 0.5,
     2: 0.75,
-    3: 1.0,  # Assuming 3 is the baseline
+    3: 1.0,  # Baseline beat strength
     4: 1.25,
     5: 1.5,
 }
@@ -114,64 +113,48 @@ class Button:
 
 def simulateBeat(bpm_initial_config):
     pygame.init()
-
     screen = pygame.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])
     clock = pygame.time.Clock()
 
     bpm_config = bpm_initial_config
-    beat_delay = 60 / bpm_config.beats_per_minute / 2
+    metronome = Metronome((130, 130, 130), (190, 190, 190))
 
-    metronome = Metronome((20, 20, 20), (190, 190, 190))
-
-    btn_subdivision1 = Button(50, 1050, 200, 50, '4/4 Beat')
-    btn_subdivision2 = Button(300, 1050, 200, 50, '7/4 Beat')
-
+    # Creating beat circles
     num_circles = bpm_config.beats_per_measure
-    circles = []
-    for i in range(num_circles * 2):
-        angle = 2 * math.pi * i / (num_circles * 2)
-        position = (CENTER_X + CIRCLE_DISTANCE * math.cos(angle),
-                    CENTER_Y + CIRCLE_DISTANCE * math.sin(angle))
-        radius = SMALL_CIRCLE_RADIUS if i % 2 else CIRCLE_RADIUS
-        circle = CircleBeat(position, radius, BUTTON_TEXT_COLOR)
-        circles.append(circle)
-
-    update_configuration_required = False
-    running = True
-    beat_counter = 0
-    # Number of frames per beat
-    interpolation_steps = FPS / (bpm_config.beats_per_minute / 60)
+    circles = [CircleBeat(
+        position=(
+            CENTER_X + CIRCLE_DISTANCE * math.cos(2 * math.pi * i / (num_circles * 2)),
+            CENTER_Y + CIRCLE_DISTANCE * math.sin(2 * math.pi * i / (num_circles * 2))
+        ),
+        base_radius=SMALL_CIRCLE_RADIUS if i % 2 else CIRCLE_RADIUS,
+        color=BUTTON_TEXT_COLOR
+    ) for i in range(num_circles * 2)]
 
     # UI Buttons for rhythm selection
     btn_subdivision1 = Button(50, 1050, 200, 50, '4/4 Beat')
     btn_subdivision2 = Button(300, 1050, 200, 50, '7/4 Beat')
 
-    while running:
-        # Interpolate metronome color
-        t = abs(2 * (beat_counter / interpolation_steps %
-                (num_circles * 2)) / (num_circles * 2) - 1)
-        metronome.update_color(t, num_circles * 2 * 2)
-        metronome.draw(screen)
+    running = True
+    beat_counter = 0
+    interpolation_steps = FPS / (bpm_config.beats_per_minute / 60)
+    update_configuration_required = False
 
-        # Draw buttons
+    while running:
+        metronome.update_color(
+            beat_counter / interpolation_steps % (num_circles * 2),
+            num_circles * 2 * 2
+        )
+        metronome.draw(screen)
         btn_subdivision1.draw(screen)
         btn_subdivision2.draw(screen)
 
-        # Interpolate circle sizes with updated weights
+        # Update and draw beat circles
         for i, circle in enumerate(circles):
-            is_active = i == int(
-                beat_counter / interpolation_steps) % (num_circles * 2)
+            is_active = i == int(beat_counter / interpolation_steps) % (num_circles * 2)
             text = str((i // 2) + 1) if i % 2 == 0 else ''
-
-            # Use the weight to get the target size from the mapping
             weight = bpm_config.beat_strengths[i]
-            target_size = BEAT_STRENGTH_MAP.get(
-                weight, 1.0) if is_active else 1.0
-
-            current_size = circle.radius / circle.base_radius
-            size_factor = current_size + \
-                (target_size - current_size) / \
-                SMOOTH_TRANSITION_FACTOR  # Smooth transition
+            target_size = BEAT_STRENGTH_MAP.get(weight, 1.0) if is_active else 1.0
+            size_factor = (circle.radius / circle.base_radius + (target_size - circle.radius / circle.base_radius) / SMOOTH_TRANSITION_FACTOR)
             circle.update(is_active, text, size_factor)
             circle.draw(screen)
 
@@ -303,4 +286,4 @@ beat_strengths_phrase = [
 visualizer_beat_strengths = beat_strengths_phrase * 2
 song_verse_pattern_config = BeatPatternConfig(beats_per_minute=240, beats_per_measure=7, beat_strengths=visualizer_beat_strengths)
 
-simulateBeat(bpm_initial_config=song_verse_pattern_config)
+simulateBeat(bpm_initial_config=eleven_eight_pattern_config)
