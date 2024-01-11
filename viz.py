@@ -5,7 +5,7 @@ import math
 # Constants
 SCREEN_WIDTH, SCREEN_HEIGHT = 1600, 1200
 CIRCLE_RADIUS = 65
-SMALL_CIRCLE_RADIUS = 35
+SMALL_CIRCLE_RADIUS = 50
 CENTER_X, CENTER_Y = SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2
 FPS = 60  # Higher frame rate for smoother transitions
 BEAT_COLOR_ACTIVE = (96, 224, 130)
@@ -121,7 +121,7 @@ def simulateBeat(bpm_initial_config):
     bpm_config = bpm_initial_config
     beat_delay = 60 / bpm_config.beats_per_minute / 2
 
-    metronome = Metronome((120, 120, 120), (150, 150, 150))
+    metronome = Metronome((20, 20, 20), (190, 190, 190))
 
     btn_subdivision1 = Button(50, 1050, 200, 50, '4/4 Beat')
     btn_subdivision2 = Button(300, 1050, 200, 50, '7/4 Beat')
@@ -185,15 +185,15 @@ def simulateBeat(bpm_initial_config):
                         beats_per_minute=bpm_config.beats_per_minute,
                         beats_per_measure=8,
                         beat_strengths=[3, 2, 1, 1, 3, 2,
-                                        1, 1, 3, 2, 1, 1, 3, 2, 1, 1]
+                                        1, 1, 3, 2, 1, 1, 3, 2, 1, 1],
                     )
                     update_configuration_required = True
                 if btn_subdivision2.is_over(pos):
                     bpm_config = BeatPatternConfig(
                         beats_per_minute=bpm_config.beats_per_minute,
                         beats_per_measure=7,
-                        beat_strengths=[3, 1, 1, 1, 3,
-                                        1, 1, 1, 3, 1, 1, 1, 3, 1]
+                        beat_strengths=[5, 2, 2, 2, 5,
+                                        2, 2, 2, 5, 2, 2, 2, 5, 2],
                     )
                     update_configuration_required = True
 
@@ -221,6 +221,86 @@ def simulateBeat(bpm_initial_config):
 
 
 # Example usage
-beat_pattern_config = BeatPatternConfig(beats_per_minute=360, beats_per_measure=7, beat_strengths=[
-                                        5, 2, 2, 2, 5, 2, 2, 2, 5, 2, 2, 2, 5, 2])
-simulateBeat(bpm_initial_config=beat_pattern_config)
+beat_pattern_config = BeatPatternConfig(
+    beats_per_minute=360,
+    beats_per_measure=7,
+    beat_strengths=[5, 2, 2, 2, 5, 2, 2, 2, 5, 2, 2, 2, 5, 2],
+)
+waltz_pattern_config = BeatPatternConfig(
+    beats_per_minute=240,
+    beats_per_measure=3,
+    beat_strengths=[5, 1, 1, 5, 1, 1],
+)
+quintuple_pattern_config_3_2 = BeatPatternConfig(
+    beats_per_minute=220,
+    beats_per_measure=5,
+    beat_strengths=[5, 2, 1, 5, 1, 5, 2, 1, 5, 1],
+)
+quintuple_pattern_config_2_3 = BeatPatternConfig(
+    beats_per_minute=220,
+    beats_per_measure=5,
+    beat_strengths=[5, 1, 5, 2, 2, 5, 1, 5, 2, 2],
+)
+compound_duple_pattern_config = BeatPatternConfig(
+    beats_per_minute=220,
+    beats_per_measure=6,
+    beat_strengths=[5, 2, 1, 5, 2, 1, 5, 2, 1, 5, 2, 1],
+)
+compound_triple_pattern_config = BeatPatternConfig(
+    beats_per_minute=620,
+    beats_per_measure=9,
+    beat_strengths=[5, 2, 1, 5, 2, 1, 5, 2, 1, 5, 2, 1, 5, 2, 1, 5, 2, 1],
+)
+seven_eight_pattern_config = BeatPatternConfig(
+    beats_per_minute=260,
+    beats_per_measure=7,
+    beat_strengths=[5, 1, 4, 1, 5, 1, 1, 5, 1, 4, 1, 5, 1, 1],
+)
+nine_eight_pattern_config = BeatPatternConfig(
+    beats_per_minute=260,
+    beats_per_measure=9,
+    beat_strengths=[5, 1, 4, 1, 4, 1, 5, 1, 1, 5, 1, 4, 1, 4, 1, 5, 1, 1]
+)
+eleven_eight_pattern_config = BeatPatternConfig(
+    beats_per_minute=260,
+    beats_per_measure=11,
+    beat_strengths=[5, 1, 4, 1, 5, 1, 1, 4, 1,
+                    4, 1, 5, 1, 4, 1, 5, 1, 1, 4, 1, 4, 1]
+)
+thirteen_eight_pattern_config = BeatPatternConfig(
+    beats_per_minute=260,
+    beats_per_measure=13,
+    beat_strengths=[5, 1, 4, 1, 4, 1, 5, 2, 1, 5, 1,
+                    4, 1, 5, 1, 1, 5, 1, 4, 1, 4, 1, 5, 1, 1, 5]
+)
+fifteen_eight_pattern_config = BeatPatternConfig(
+    beats_per_minute=260,
+    beats_per_measure=15,
+    beat_strengths=[5, 1, 4, 1, 4, 1, 4, 1, 5, 2, 1, 4, 1,
+                    4, 1, 5, 1, 4, 1, 4, 1, 4, 1, 5, 1, 1, 4, 1, 4, 1],
+)
+
+# Beat strength of each beat in the phrase (two bars per pattern)
+beat_strengths_phrase = [
+    # Pattern 1
+    5, 2, 5, 2, 3, 5, 2, 2,  # **1** 2 **3** 4 + **5** 6 7
+    5, 2, 5, 3, 2, 5, 2, 2,  # **1** 2 **3** + 4 **5** 6 7
+    
+    # Pattern 2
+    5, 2, 5, 2, 3, 5, 2, 2,  # **1** 2 **3** 4 + **5** 6 7
+    5, 2, 5, 3, 2, 5, 5, 2,  # **1** 2 **3** + 4 **5** **6** 7
+    
+    # Pattern 3
+    5, 3, 2, 5, 5, 3, 2, 2,  # **1** + 2 **3** **4** + 5 6 7
+    5, 3, 2, 5, 2, 5, 2, 2,  # **1** + 2 **3** **4** 5 **6** 7
+    
+    # Pattern 4
+    5, 3, 2, 5, 3, 5, 3, 5,  # **1** + 2 **3** + 4 **5** + 6 **7**
+    5, 2, 5, 2, 3, 5, 2, 5   # **1** 2 **3** 4 + **5** 6 **7**
+]
+
+# Since each beat is represented once, for the visualizer, we need to double the length of the pattern
+visualizer_beat_strengths = beat_strengths_phrase * 2
+song_verse_pattern_config = BeatPatternConfig(beats_per_minute=240, beats_per_measure=7, beat_strengths=visualizer_beat_strengths)
+
+simulateBeat(bpm_initial_config=song_verse_pattern_config)
