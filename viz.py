@@ -1,39 +1,19 @@
 import pygame
 import math
+from dataclasses import dataclass
 
-# Constants
-SCREEN_WIDTH, SCREEN_HEIGHT = 1200, 900
-CENTER_X, CENTER_Y = SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2
-FPS = 60  # Frame rate for smooth transitions
-BEAT_COLOR_ACTIVE = (96, 224, 130)
-BEAT_COLOR_INACTIVE = (200, 220, 200)
-BUTTON_TEXT_COLOR = (255, 255, 255)
-BUTTON_BG_COLOR = (0, 0, 0)
-FONT_SIZE_LARGE = 36
-CIRCLE_DISTANCE = 300
-CIRCLE_RADIUS = 65
-SMALL_CIRCLE_RADIUS = 50
-CIRCLE_BORDER_WIDTH = 2
-SMOOTH_TRANSITION_FACTOR = 10
-# Mapping beat strengths to size factors
-BEAT_STRENGTH_MAP = {
-    1: 0.5,
-    2: 0.75,
-    3: 1.0,  # Baseline beat strength
-    4: 1.25,
-    5: 1.5,
-}
+# Constants and Configuration
+from config import (
+    SCREEN_WIDTH, SCREEN_HEIGHT, CENTER_X, CENTER_Y, FPS, BEAT_COLOR_ACTIVE, BEAT_COLOR_INACTIVE,
+    BUTTON_TEXT_COLOR, BUTTON_BG_COLOR, FONT_SIZE_LARGE, CIRCLE_DISTANCE, CIRCLE_RADIUS,
+    SMALL_CIRCLE_RADIUS, CIRCLE_BORDER_WIDTH, SMOOTH_TRANSITION_FACTOR, BEAT_STRENGTH_MAP
+)
 
-
+@dataclass
 class BeatPatternConfig:
-    """
-    Holds configuration for the beat pattern.
-    """
-
-    def __init__(self, beats_per_minute, beats_per_measure, beat_strengths):
-        self.beats_per_minute = beats_per_minute
-        self.beats_per_measure = beats_per_measure
-        self.beat_strengths = beat_strengths
+    beats_per_minute: int
+    beats_per_measure: int
+    beat_strengths: dict[int, float]
 
 
 class CircleBeat:
@@ -47,6 +27,20 @@ class CircleBeat:
         self.radius = base_radius
         self.color = color
         self.text = text
+        
+    @staticmethod
+    def create_circles(bpm_config: BeatPatternConfig) -> list['CircleBeat']:
+        num_circles = bpm_config.beats_per_measure
+        return [
+            CircleBeat(
+                position=(
+                    CENTER_X + CIRCLE_DISTANCE * math.cos(2 * math.pi * i / (num_circles * 2)),
+                    CENTER_Y + CIRCLE_DISTANCE * math.sin(2 * math.pi * i / (num_circles * 2))
+                ),
+                base_radius=SMALL_CIRCLE_RADIUS if i % 2 else CIRCLE_RADIUS,
+                color=BUTTON_TEXT_COLOR
+            ) for i in range(num_circles * 2)
+        ]
 
     def draw(self, screen):
         pygame.draw.circle(screen, self.color, self.position, self.radius)
@@ -87,56 +81,24 @@ class Metronome:
         screen.fill(self.current_color)
 
 
-class Button:
-    def __init__(self, x, y, width, height, text=''):
-        self.x = x
-        self.y = y
-        self.width = width
-        self.height = height
-        self.text = text
-
-    def draw(self, screen):
-        pygame.draw.rect(screen, (0, 0, 0),
-                         (self.x, self.y, self.width, self.height), 0)
-        if self.text != '':
-            font = pygame.font.Font(None, 30)
-            text = font.render(self.text, 1, (255, 255, 255))
-            screen.blit(text, (self.x + (self.width / 2 - text.get_width() / 2),
-                        self.y + (self.height / 2 - text.get_height() / 2)))
-
-    def is_over(self, pos):
-        if self.x < pos[0] < self.x + self.width and self.y < pos[1] < self.y + self.height:
-            return True
-        return False
-
-
 def simulateBeat(bpm_initial_config):
+    """
+    Simulates a beat pattern on the screen.
+    """
+    # Initialize pygame and create screen
     pygame.init()
     screen = pygame.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])
     clock = pygame.time.Clock()
-
     bpm_config = bpm_initial_config
     metronome = Metronome((130, 130, 130), (190, 190, 190))
 
-    # Creating beat circles
+    # Create beat circles
+    circles = CircleBeat.create_circles(bpm_config)
     num_circles = bpm_config.beats_per_measure
-    circles = [CircleBeat(
-        position=(
-            CENTER_X + CIRCLE_DISTANCE * math.cos(2 * math.pi * i / (num_circles * 2)),
-            CENTER_Y + CIRCLE_DISTANCE * math.sin(2 * math.pi * i / (num_circles * 2))
-        ),
-        base_radius=SMALL_CIRCLE_RADIUS if i % 2 else CIRCLE_RADIUS,
-        color=BUTTON_TEXT_COLOR
-    ) for i in range(num_circles * 2)]
-
-    # UI Buttons for rhythm selection
-    btn_subdivision1 = Button(50, 850, 200, 50, '4/4 Beat')
-    btn_subdivision2 = Button(300, 850, 200, 50, '7/4 Beat')
 
     running = True
     beat_counter = 0
     interpolation_steps = FPS / (bpm_config.beats_per_minute / 60)
-    update_configuration_required = False
 
     while running:
         metronome.update_color(
@@ -144,8 +106,6 @@ def simulateBeat(bpm_initial_config):
             num_circles * 2 * 2
         )
         metronome.draw(screen)
-        btn_subdivision1.draw(screen)
-        btn_subdivision2.draw(screen)
 
         # Update and draw beat circles
         for i, circle in enumerate(circles):
@@ -162,38 +122,7 @@ def simulateBeat(bpm_initial_config):
                 running = False
             if event.type == pygame.MOUSEBUTTONDOWN:
                 pos = pygame.mouse.get_pos()
-                if btn_subdivision1.is_over(pos):
-                    bpm_config = BeatPatternConfig(
-                        beats_per_minute=bpm_config.beats_per_minute,
-                        beats_per_measure=8,
-                        beat_strengths=[3, 2, 1, 1, 3, 2,
-                                        1, 1, 3, 2, 1, 1, 3, 2, 1, 1],
-                    )
-                    update_configuration_required = True
-                if btn_subdivision2.is_over(pos):
-                    bpm_config = BeatPatternConfig(
-                        beats_per_minute=bpm_config.beats_per_minute,
-                        beats_per_measure=7,
-                        beat_strengths=[5, 2, 2, 2, 5,
-                                        2, 2, 2, 5, 2, 2, 2, 5, 2],
-                    )
-                    update_configuration_required = True
-
-        if update_configuration_required:
-            num_circles = bpm_config.beats_per_measure
-            circles = []
-            for i in range(num_circles * 2):
-                angle = 2 * math.pi * i / (num_circles * 2)
-                position = (CENTER_X + CIRCLE_DISTANCE * math.cos(angle),
-                            CENTER_Y + CIRCLE_DISTANCE * math.sin(angle))
-                radius = SMALL_CIRCLE_RADIUS if i % 2 else CIRCLE_RADIUS
-                circle = CircleBeat(position, radius, BUTTON_TEXT_COLOR)
-                circles.append(circle)
-
-                beat_delay = 60 / bpm_config.beats_per_minute / 2
-                interpolation_steps = FPS / (bpm_config.beats_per_minute / 60)
-                beat_counter = 0  # Reset the beat counter
-                update_configuration_required = False
+                # Handle additional events here
 
         pygame.display.flip()
         clock.tick(FPS)

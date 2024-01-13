@@ -1,0 +1,22 @@
+# Constants
+SCREEN_WIDTH, SCREEN_HEIGHT = 1200, 900
+CENTER_X, CENTER_Y = SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2
+FPS = 60  # Frame rate for smooth transitions
+BEAT_COLOR_ACTIVE = (96, 224, 130)
+BEAT_COLOR_INACTIVE = (200, 220, 200)
+BUTTON_TEXT_COLOR = (255, 255, 255)
+BUTTON_BG_COLOR = (0, 0, 0)
+FONT_SIZE_LARGE = 36
+CIRCLE_DISTANCE = 300
+CIRCLE_RADIUS = 65
+SMALL_CIRCLE_RADIUS = 50
+CIRCLE_BORDER_WIDTH = 2
+SMOOTH_TRANSITION_FACTOR = 10
+# Mapping beat strengths to size factors
+BEAT_STRENGTH_MAP = {
+    1: 0.5,
+    2: 0.75,
+    3: 1.0,  # Baseline beat strength
+    4: 1.25,
+    5: 1.5,
+}
