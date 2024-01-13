@@ -14,9 +14,11 @@ CIRCLE_BORDER_WIDTH = 2
 SMOOTH_TRANSITION_FACTOR = 10
 # Mapping beat strengths to size factors
 BEAT_STRENGTH_MAP = {
-    1: 0.5,
-    2: 0.75,
-    3: 1.0,  # Baseline beat strength
-    4: 1.25,
-    5: 1.5,
+    0: 0.0,
+    1: 0.4,
+    2: 0.8,
+    3: 1.2,  # Baseline beat strength
+    4: 1.6,
+    5: 2.0,
 }
+SOUND_FILE = 'sounds/cowbell.wav'
