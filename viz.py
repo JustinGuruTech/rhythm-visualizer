@@ -7,17 +7,8 @@ import pygame.mixer
 from config import (
     SCREEN_WIDTH, SCREEN_HEIGHT, CENTER_X, CENTER_Y, FPS, BEAT_COLOR_ACTIVE, BEAT_COLOR_INACTIVE,
     BUTTON_TEXT_COLOR, BUTTON_BG_COLOR, FONT_SIZE_LARGE, CIRCLE_DISTANCE, CIRCLE_RADIUS,
-    SMALL_CIRCLE_RADIUS, CIRCLE_BORDER_WIDTH, SMOOTH_TRANSITION_FACTOR, BEAT_STRENGTH_MAP, SOUND_FILE
+    SMALL_CIRCLE_RADIUS, CIRCLE_BORDER_WIDTH, SMOOTH_TRANSITION_FACTOR, BEAT_STRENGTH_MAP, SOUND_FILE, BEAT_PATTERNS, BeatPatternConfig
 )
-
-
-@dataclass
-class BeatPatternConfig:
-    beats_per_minute: int
-    beats_per_measure: int
-    beat_strengths: dict[int, float]
-    # Default to 2, can be changed to 3 for triplets, etc.
-    subdivisions: int = 2
 
 
 class CircleBeat:
@@ -106,8 +97,9 @@ def simulateBeat(bpm_initial_config):
     bpm_config = bpm_initial_config
     metronome = Metronome((130, 130, 130), (190, 190, 190))
 
+    # Initialize the mixer and load the sound
     pygame.mixer.init()
-    hat_sound = pygame.mixer.Sound(SOUND_FILE)
+    hat_sound = pygame.mixer.Sound(SOUND_FILE)  # Ensure SOUND_FILE is defined and points to your audio file
 
     # Create beat circles
     circles = CircleBeat.create_circles(bpm_config)
@@ -116,51 +108,40 @@ def simulateBeat(bpm_initial_config):
     running = True
     beat_counter = 0
     interpolation_steps = FPS / (bpm_config.beats_per_minute / 60)
-
     last_played_index = -1
 
     while running:
         total_beats = num_circles * bpm_config.subdivisions * 2
-        metronome.update_color(
-            beat_counter / interpolation_steps % total_beats, total_beats)
+        metronome.update_color(beat_counter / interpolation_steps % total_beats, total_beats)
         metronome.draw(screen)
 
         total_circles = num_circles * bpm_config.subdivisions
-        active_circle_index = int(
-            beat_counter / interpolation_steps) % total_circles
-        active_beat_number = (active_circle_index //
-                              bpm_config.subdivisions) + 1
+        current_index = int(beat_counter / interpolation_steps) % total_circles
+        active_beat_number = (current_index // bpm_config.subdivisions) + 1
+
+        if current_index != last_played_index:
+            # Adjusted logic to handle beat strengths correctly
+            beat_strength_index = current_index if current_index < len(bpm_config.beat_strengths) else 0
+            weight = bpm_config.beat_strengths[beat_strength_index]
+            volume = BEAT_STRENGTH_MAP.get(weight, 0.25)
+
+            hat_sound.set_volume(volume)
+            hat_sound.play()
+            last_played_index = current_index
 
         for i, circle in enumerate(circles):
-            is_active = i == active_circle_index
-            if is_active and i != last_played_index:
-                # Determine if it's a main beat or a subdivision
-                if i % bpm_config.subdivisions == 0:
-                    # Main beat logic
-                    weight = bpm_config.beat_strengths[(
-                        i // bpm_config.subdivisions) - 1]
-                    print(weight)
-                    volume = BEAT_STRENGTH_MAP.get(weight, 1.0)
-                    hat_sound.set_volume(volume)
-                    hat_sound.play()
-                else:
-                    # Subdivision logic (you can adjust the volume or choose a different sound)
-                    subdivision_volume = 0.5  # Example volume for subdivisions
-                    hat_sound.set_volume(subdivision_volume)
-                    hat_sound.play()
-
-                last_played_index = i
+            is_active = i == current_index
+            
             if i % bpm_config.subdivisions == 0:
                 text = str((i // bpm_config.subdivisions) + 1)
             else:
                 text = ''
 
-            # Update circle size based on beat strength and activity
-            weight = bpm_config.beat_strengths[active_beat_number - 1]
-            target_size = BEAT_STRENGTH_MAP.get(
-                weight, 1.0) if is_active else 1.0
-            size_factor = (circle.radius / circle.base_radius + (target_size -
-                           circle.radius / circle.base_radius) / SMOOTH_TRANSITION_FACTOR)
+            # Adjusted logic for updating circle size
+            beat_strength_index = i if i < len(bpm_config.beat_strengths) else 0
+            weight = bpm_config.beat_strengths[beat_strength_index]
+            target_size = BEAT_STRENGTH_MAP.get(weight, 1.0) if is_active else 1.0
+            size_factor = (circle.radius / circle.base_radius + (target_size - circle.radius / circle.base_radius) / SMOOTH_TRANSITION_FACTOR)
             circle.update(is_active, text, size_factor)
             circle.draw(screen)
 
@@ -173,86 +154,23 @@ def simulateBeat(bpm_initial_config):
     pygame.quit()
 
 
-beat_patterns = {
-    "waltz_pattern": BeatPatternConfig(
-        beats_per_minute=340,
-        beats_per_measure=3,
-        beat_strengths=[5, 1, 1, 5, 1, 1]
-    ),
-    "quintuple_pattern_3_2": BeatPatternConfig(
-        beats_per_minute=420,
-        beats_per_measure=5,
-        beat_strengths=[5, 2, 1, 5, 1, 5, 2, 1, 5, 1]
-    ),
-    "quintuple_pattern_2_3": BeatPatternConfig(
-        beats_per_minute=420,
-        beats_per_measure=5,
-        beat_strengths=[5, 1, 5, 2, 2, 5, 1, 5, 2, 2]
-    ),
-    "compound_duple_pattern": BeatPatternConfig(
-        beats_per_minute=220,
-        beats_per_measure=6,
-        beat_strengths=[5, 2, 1, 5, 2, 1, 5, 2, 1, 5, 2, 1]
-    ),
-    "compound_triple_pattern": BeatPatternConfig(
-        beats_per_minute=420,
-        beats_per_measure=9,
-        beat_strengths=[5, 2, 1, 5, 2, 1, 5, 2, 1, 5, 2, 1, 5, 2, 1, 5, 2, 1]
-    ),
-    "seven_eight_pattern": BeatPatternConfig(
-        beats_per_minute=360,
-        beats_per_measure=7,
-        beat_strengths=[5, 2, 2, 2, 5, 2, 2, 2, 5, 2, 2, 2, 5, 2]
-    ),
-    "nine_eight_pattern": BeatPatternConfig(
-        beats_per_minute=260,
-        beats_per_measure=9,
-        beat_strengths=[5, 1, 4, 1, 4, 1, 5, 1, 1, 5, 1, 4, 1, 4, 1, 5, 1, 1]
-    ),
-    "eleven_eight_pattern": BeatPatternConfig(
-        beats_per_minute=260,
-        beats_per_measure=11,
-        beat_strengths=[5, 1, 4, 1, 5, 1, 1, 4, 1,
-                        4, 1, 5, 1, 4, 1, 5, 1, 1, 4, 1, 4, 1]
-    ),
-    "thirteen_eight_pattern": BeatPatternConfig(
-        beats_per_minute=260,
-        beats_per_measure=13,
-        beat_strengths=[5, 1, 4, 1, 4, 1, 5, 2, 1, 5, 1,
-                        4, 1, 5, 1, 1, 5, 1, 4, 1, 4, 1, 5, 1, 1, 5]
-    ),
-    "fifteen_eight_pattern": BeatPatternConfig(
-        beats_per_minute=260,
-        beats_per_measure=15,
-        beat_strengths=[5, 1, 4, 1, 4, 1, 4, 1, 5, 2, 1, 4, 1,
-                        4, 1, 5, 1, 4, 1, 4, 1, 4, 1, 5, 1, 1, 4, 1, 4, 1]
-    ),
-    "song_verse_pattern": BeatPatternConfig(
-        beats_per_minute=240,
-        beats_per_measure=7,
-        beat_strengths=[5, 2, 5, 2, 3, 5, 2, 2, 5, 2, 5, 3, 2, 5, 2, 2, 5, 3, 2, 5, 5, 3,
-                        2, 2, 5, 3, 2, 5, 2, 5, 2, 2, 5, 3, 2, 5, 3, 5, 3, 5, 5, 2, 5, 2, 3, 5, 2, 5] * 2
-    ),
-    "new_nine_eight": BeatPatternConfig(
-        beats_per_minute=340,
-        beats_per_measure=9,
-        beat_strengths=[5, 3, 1, 5, 3, 1, 5, 3, 1, 5, 4, 3, 5, 3, 1, 5,
-                        3, 1, 5, 3, 1, 5, 3, 1, 5, 3, 1, 5, 4, 3, 5, 3, 1, 5, 3, 1]
-    ),
-    "new_eleven_eight": BeatPatternConfig(
-        beats_per_minute=340,
-        beats_per_measure=11,
-        beat_strengths=[5, 3, 1, 5, 3, 1, 5, 3, 1, 5, 4, 3, 5, 3, 1, 5, 3, 1, 5,
-                        3, 1, 5, 4, 3, 5, 3, 1, 5, 3, 1, 5, 3, 1, 5, 4, 3, 5, 3, 1, 5, 3, 1]
-    ),
-    "triplet_pattern": BeatPatternConfig(
-        beats_per_minute=340,
-        beats_per_measure=3,
-        beat_strengths=[5, 2, 1, 0, 1, 1, 0, 2, 1],
-        subdivisions=3
-    ),
-}
-
 # Example of using a pattern from the dictionary
-chosen_pattern = beat_patterns["triplet_pattern"]
+# chosen_pattern = BEAT_PATTERNS["simple_duple_pattern"]
+# chosen_pattern = BEAT_PATTERNS["polyrhythm_pattern"]
+# chosen_pattern = BEAT_PATTERNS["waltz_pattern"]
+# chosen_pattern = BEAT_PATTERNS["quintuple_pattern_3_2"]
+# chosen_pattern = BEAT_PATTERNS["quintuple_pattern_2_3"]
+# chosen_pattern = BEAT_PATTERNS["compound_duple_pattern"]
+# chosen_pattern = BEAT_PATTERNS["compound_triple_pattern"]
+# chosen_pattern = BEAT_PATTERNS["seven_eight_pattern"]
+# chosen_pattern = BEAT_PATTERNS["nine_eight_pattern"]
+# chosen_pattern = BEAT_PATTERNS["eleven_eight_pattern"]
+# chosen_pattern = BEAT_PATTERNS["thirteen_eight_pattern"]
+# chosen_pattern = BEAT_PATTERNS["fifteen_eight_pattern"]
+# chosen_pattern = BEAT_PATTERNS["song_verse_pattern"]
+# chosen_pattern = BEAT_PATTERNS["new_nine_eight"]
+# chosen_pattern = BEAT_PATTERNS["new_eleven_eight"]
+# chosen_pattern = BEAT_PATTERNS["nine_eight_pattern"]
+chosen_pattern = BEAT_PATTERNS["complex_rhythm_5_7"]
+
 simulateBeat(bpm_initial_config=chosen_pattern)
