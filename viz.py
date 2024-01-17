@@ -162,7 +162,7 @@ def simulateBeat(bpm_initial_config):
 # chosen_pattern = BEAT_PATTERNS["quintuple_pattern_2_3"]
 # chosen_pattern = BEAT_PATTERNS["compound_duple_pattern"]
 # chosen_pattern = BEAT_PATTERNS["compound_triple_pattern"]
-# chosen_pattern = BEAT_PATTERNS["seven_eight_pattern"]
+chosen_pattern = BEAT_PATTERNS["seven_eight_pattern"]
 # chosen_pattern = BEAT_PATTERNS["nine_eight_pattern"]
 # chosen_pattern = BEAT_PATTERNS["eleven_eight_pattern"]
 # chosen_pattern = BEAT_PATTERNS["thirteen_eight_pattern"]
@@ -171,6 +171,6 @@ def simulateBeat(bpm_initial_config):
 # chosen_pattern = BEAT_PATTERNS["new_nine_eight"]
 # chosen_pattern = BEAT_PATTERNS["new_eleven_eight"]
 # chosen_pattern = BEAT_PATTERNS["nine_eight_pattern"]
-chosen_pattern = BEAT_PATTERNS["complex_rhythm_5_7"]
+# chosen_pattern = BEAT_PATTERNS["complex_rhythm_5_7"]
 
 simulateBeat(bpm_initial_config=chosen_pattern)
